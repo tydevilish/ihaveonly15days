@@ -1,0 +1,93 @@
+# ============================================================
+#  GLOBAL IGNORE RULES (Nuxt + Express + Docker + Node)
+# ============================================================
+
+# === Node.js dependencies ===
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+
+# === Build outputs (Nuxt / Vite / Next / etc.) ===
+dist/
+.nuxt/
+.out/
+.next/
+.cache/
+.output/
+.vercel/
+.husky/
+*.tsbuildinfo
+
+# === Environment Variables ===
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+.env.example
+
+# === Logs ===
+logs
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# === OS / Editor files ===
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# === Docker related ===
+# Docker volumes or temp files
+docker-data/
+tmp/
+data/
+*.bak
+
+# === Coverage / Testing ===
+coverage/
+.nyc_output/
+
+# === Lock or Temporary files ===
+*.lock
+*.tmp
+*.temp
+
+# === Runtime data ===
+*.sqlite
+*.db
+*.db-shm
+*.db-wal
+
+# === Upload folders (if backend stores images/files) ===
+uploads/
+public/uploads/
+storage/
+
+# ============================================================
+#  FRONTEND SPECIFIC (Nuxt 3)
+# ============================================================
+frontend/.nuxt/
+frontend/.output/
+frontend/dist/
+frontend/node_modules/
+frontend/.env
+frontend/.vercel/
+frontend/.cache/
+
+# ============================================================
+#  BACKEND SPECIFIC (Express)
+# ============================================================
+backend/node_modules/
+backend/.env
+backend/logs/
+backend/tmp/
+backend/dist/
+backend/uploads/
+backend/data/
