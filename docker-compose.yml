@@ -28,27 +28,26 @@ services:
   frontend:
     build: ./frontend
     container_name: nuxt_frontend
+    restart: always
     ports:
       - "3000:3000"
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    command: npm run dev
     depends_on:
       - backend
     environment:
-      - NUXT_PUBLIC_API_URL=http://localhost:3001
       - CHOKIDAR_USEPOLLING=true
 
   backend:
     build: ./backend
     container_name: express_backend
+    restart: always
     ports:
       - "3001:3000"
     volumes:
       - "./backend:/app"
       - "/app/node_modules"
-    command: node index.js
     environment:
       - DB_HOST=mysql
       - DB_USER=user

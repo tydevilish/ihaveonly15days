@@ -281,13 +281,19 @@ async function getReadings() {
                 Authorization: `Bearer ${token}`
             }
         })
+
         if (status === 200) {
           reading.value = data.data
         }
+        
 
     } catch (err) {
         console.log(err)
         error.value = err.response?.data?.message
+
+        if (err.response?.status === 404 || err.response?.status === 401 ) {
+          router.push("/dashboard")
+        }
     }
     }
 }
