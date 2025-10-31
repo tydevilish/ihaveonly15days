@@ -63,7 +63,7 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const [result] = await pool.query(
-      "INSERT INTO users (username, password_hash, email , role) VALUES (?, ?, ? ,'user1')",
+      "INSERT INTO users (username, password_hash, email , role) VALUES (?, ?, ? ,'user2')",
       [username, hashedPassword, email]
     );
 
@@ -131,7 +131,7 @@ exports.login = async (req, res) => {
 
     return res.status(200).json({
       message: "เข้าสู่ระบบสำเร็จ",
-      token,
+      data: token,
     });
   } catch (error) {
     console.log(error);
@@ -143,26 +143,31 @@ exports.login = async (req, res) => {
 
 exports.me = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const user_id = Number(req.user.user_id);
     const [rows] = await pool.query(
       "SELECT user_id , username , email , role , create_at FROM users WHERE user_id = ? LIMIT 1",
-      [userId]
+      [user_id]
     );
 
     if (rows.length === 0) {
       return res.status(404).json({
         message: "ไม่พบผู้ใช้งาน",
-      });
+      }); 
     }
 
     const user = rows[0];
 
-    return res.status(200).json({
+    const user_data = {
       user_id: user.user_id,
       username: user.username,
       email: user.email,
       role: user.role,
       create_at: user.create_at,
+    };
+
+    return res.status(200).json({
+      message: "ดึงข้อมูลผู้ใช้สำเร็จ",
+      data:user_data,
     });
   } catch (error) {
     console.log(error);

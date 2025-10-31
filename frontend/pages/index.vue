@@ -3,5 +3,7 @@
 </template>
 
 <script setup lang="js">
- navigateTo("/login")
+if (import.meta.server){
+  navigateTo("/login")
+}
 </script>

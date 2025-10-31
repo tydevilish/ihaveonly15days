@@ -4,7 +4,7 @@ exports.claim = async (req, res) => {
   try {
     const serial_number = String(req.body.serial_number).trim();
     const name = String(req.body.name);
-    const user_id = Number(req.body.user_id);
+    const user_id = Number(req.user.user_id);
 
     if (!serial_number) {
       return res.status(400).json({
@@ -31,20 +31,32 @@ exports.claim = async (req, res) => {
 
     const device = rows[0];
 
-    if (device.owner_id != user_id) {
+    if (device.owner_id === null) {
+      const [update_result] = await pool.query(
+        "UPDATE devices SET owner_id = ?, name = ?, status = ? WHERE device_id = ?",
+        [user_id, name, "active", device.device_id]
+      );
+
+      if (!update_result) {
+        return res.status(500).json({ message: "อัพเดทข้อมูลไม่สำเร็จ" });
+      }
+
+      return res.status(200).json({
+        message: "เชื่อมต่อกับอุปกรณ์สำเร็จแล้ว",
+        device_id: device.device_id,
+        serial_number,
+      });
+    }
+
+    if (device.owner_id !== null) {
       return res.status(401).json({
         message: "อุปกรณ์นี้มีผู้ใช้งานในระบบแล้ว",
       });
     }
 
-    const update_device = await pool.query(
-      "UPDATE devices SET owner_id = ? , name = ? , status = ? WHERE device_id = ?",
-      [user_id, name, "active", device.device_id]
-    );
-
-    if (!update_device) {
-      return res.status(500).json({
-        message: "อัพเดทข้อมูลไม่สำเร็จ",
+    if (device.owner_id === user_id) {
+      return res.status(401).json({
+        message: "คุณได้เชื่อมต่อกับอุปกรณ์นี้แล้ว",
       });
     }
 
@@ -188,9 +200,9 @@ exports.putDeviceById = async (req, res) => {
 
 exports.unClaimDeviceById = async (req, res) => {
   try {
-    const device_id = Number(req.params.id);
-    const user_id = Number(req.user.user_id);
     const role = String(req.user.role);
+    const user_id = Number(req.user.user_id);
+    const device_id = Number(req.params.id);
 
     if (!device_id) {
       return res.status(404).json({
@@ -227,33 +239,32 @@ exports.unClaimDeviceById = async (req, res) => {
   }
 };
 
-exports.deleteDeviceById = async (req,res) => {
+exports.deleteDeviceById = async (req, res) => {
   try {
-    const device_id = Number(req.params.id)
-    const role = String(req.user.role)
+    const device_id = Number(req.params.id);
+    const role = String(req.user.role);
 
     if (!device_id) {
       return res.status(404).json({
-        message: "ID ไม่ถูกต้อง"
-      })
+        message: "ID ไม่ถูกต้อง",
+      });
     }
 
     if (role !== "admin") {
       return res.status(401).json({
-        message:"คุณไม่มีสิทธิ์ลบอุปกรณ์ชิ้นนี้ออกจากระบบ"
-      })
+        message: "คุณไม่มีสิทธิ์ลบอุปกรณ์ชิ้นนี้ออกจากระบบ",
+      });
     }
 
-    await pool.query("DELETE FROM devices WHERE device_id = ?" ,[device_id])
+    await pool.query("DELETE FROM devices WHERE device_id = ?", [device_id]);
 
     return res.status(200).json({
-      message: "ลบอุปกรณ์ชิ้นนี้สำเร็จแล้ว"
-    })
-
+      message: "ลบอุปกรณ์ชิ้นนี้สำเร็จแล้ว",
+    });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.status(500).json({
-      message: "เซิร์ฟเวอร์ไม่ตอบสนอง"
-    })
+      message: "เซิร์ฟเวอร์ไม่ตอบสนอง",
+    });
   }
-}
+};

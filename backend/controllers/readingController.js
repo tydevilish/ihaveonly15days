@@ -15,6 +15,9 @@ exports.readingLastest = async (req, res) => {
       SELECT 
       d.device_id,
       d.owner_id,
+      d.serial_number,
+      d.name,
+      d.status,
       ds.temperature_c,
       ds.humidity_pct,
       ds.last_seen  
@@ -47,8 +50,8 @@ exports.readingLastest = async (req, res) => {
 exports.getReadings = async (req, res) => {
   try {
     const device_id = Number(req.params.id);
-    const user_id = Number(req.body.user_id);
-    const role = String(req.body.role);
+    const user_id = Number(req.user.user_id);
+    const role = String(req.user.role);
 
     const [[checkDevices]] = await pool.query(
       "SELECT device_id , owner_id FROM devices WHERE device_id = ?",
@@ -67,7 +70,7 @@ exports.getReadings = async (req, res) => {
       });
     }
 
-    if (role !== "admin" && device.owner_id !== user_id) {
+    if (role !== "admin" && checkDevices.owner_id !== user_id) {
       return res.status(401).json({
         message: "ไม่มีสิทธิ์เข้าถึงรายละเอียดของอุปกรณ์นี้",
       });
@@ -98,7 +101,7 @@ exports.getReadings = async (req, res) => {
 
     return res.status(200).json({
       message: "ดึงข้อมูลรายละเอียดสำเร็จแล้ว",
-      rows,
+      data:rows,
     });
   } catch (error) {
     console.log(error);

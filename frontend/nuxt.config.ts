@@ -9,5 +9,7 @@ export default defineNuxtConfig({
   },
   modules: ['@nuxtjs/tailwindcss'],
   css: [
-    '@mdi/font/css/materialdesignicons.min.css'],
+    '@mdi/font/css/materialdesignicons.min.css' , 
+    '~/assets/css/global.css'
+  ],
 })
