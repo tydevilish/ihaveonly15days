@@ -31,7 +31,7 @@
         >
           <i class="mdi mdi-circle-small text-2xl"></i> {{ sensor.status }}
         </span>
-        <p class="text-gray-500 text-sm">Updated: {{ sensor.last_seen }}</p>
+        <p class="text-gray-500 text-sm">Updated: {{ sensor.updated_at }}</p>
       </div>
 
       <div
@@ -189,7 +189,7 @@ async function readingSensor() {
 
 onMounted(() => {
   readingSensor();
-  intervalId = setInterval(readingSensor, 4000);
+  intervalId = setInterval(readingSensor, 5000);
 });
 
 onUnmounted(() => {

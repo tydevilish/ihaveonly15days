@@ -20,11 +20,11 @@ exports.readingLastest = async (req, res) => {
       d.status,
       ds.temperature_c,
       ds.humidity_pct,
-      ds.last_seen  
+      ds.updated_at 
       FROM device_status ds 
       LEFT JOIN devices d ON ds.device_id = d.device_id 
       WHERE owner_id = ?
-      ORDER BY ds.last_seen DESC
+      ORDER BY ds.updated_at DESC
       `,
       [user_id]
     );

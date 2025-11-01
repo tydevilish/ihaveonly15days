@@ -204,6 +204,7 @@ const device = ref([]);
 const isModalOpen = ref(false);
 const reading = ref([])
 const disconnectModal = ref(false)
+let intervalId = null
 
 const form = ref({
     newName: "",
@@ -285,7 +286,7 @@ async function getReadings() {
         if (status === 200) {
           reading.value = data.data
         }
-        
+
 
     } catch (err) {
         console.log(err)
@@ -331,6 +332,11 @@ async function unClaimDeviceById() {
 onMounted(() => {
   getDeviceById();
   getReadings();
+  intervalId = setInterval(getReadings , 5000)
+});
+
+onUnmounted(() => {
+  clearInterval(intervalId);
 });
 
 definePageMeta({
