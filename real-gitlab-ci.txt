@@ -1,0 +1,79 @@
+# 1. กำหนดขั้นตอน (Stages)
+stages:
+  - build   # สร้าง "กล่อง"
+  - test    # (เผื่อมี test)
+  - deploy  # นำ "กล่อง" ไปรันบน VM2
+
+# 2. (สำคัญ!) กำหนด "ตัวแปร" ที่คุณต้องเปลี่ยน
+variables:
+  # --- ⬇️ (1) เปลี่ยนค่าตรงนี้ ⬇️ ---
+  PROD_SERVER_IP: "192.168.10.11" # IP ของ VM2 (Production Server)
+  PROD_SERVER_USER: "devops-user"  # User ที่จะใช้ SSH เข้า VM2
+  PROD_APP_PATH: "/home/devops-user/app" # โฟลเดอร์ที่เก็บ docker-compose.prod.yaml บน VM2
+
+# 3. (สำคัญ!) URL "โกดัง" (Registry) ของคุณ
+# (GitLab จะรู้เองว่า $CI_REGISTRY คือที่ไหน)
+# (ชื่อ /backend และ /frontend ต้องตรงกับใน docker-compose.prod.yaml)
+BACKEND_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH/backend:latest
+FRONTEND_IMAGE: $CI_REGISTRY/$CI_PROJECT_PATH/frontend:latest
+
+# ----- STAGE: Build -----
+build_backend:
+  stage: build
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    # --- ⬇️ (2) เปลี่ยนค่าตรงนี้ ⬇️ ---
+    # ชี้ไปที่ "สูตร" (Dockerfile) ที่ถูกต้อง
+    - docker build -f ./backend/Dockerfile.prod -t $BACKEND_IMAGE ./backend
+    - docker push $BACKEND_IMAGE
+
+build_frontend:
+  stage: build
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    # --- ⬇️ (3) เปลี่ยนค่าตรงนี้ ⬇️ ---
+    - docker build -f ./frontend/Dockerfile.prod -t $FRONTEND_IMAGE ./frontend
+    - docker push $FRONTEND_IMAGE
+
+# ----- STAGE: Test (ถ้ามี) -----
+test_app:
+  stage: test
+  script:
+    - cd backend
+    - npm install
+    - npm test
+
+# ----- STAGE: Deploy (สำคัญที่สุด) -----
+deploy_production:
+  stage: deploy
+  environment: production # ระบุว่านี่คือการ Deploy ไป Production
+  # (สำคัญ!) ตั้งค่า SSH Key
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - eval $(ssh-agent -s)
+    # --- ⬇️ (4) คุณต้องไปตั้งค่า $SSH_PRIVATE_KEY ใน GitLab UI ⬇️ ---
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan $PROD_SERVER_IP >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    - echo "Deploying to Production Server..."
+    # (สำคัญ!) รีโมท (SSH) ไปสั่ง VM2
+    - ssh $PROD_SERVER_USER@$PROD_SERVER_IP "
+        # 1. ล็อกอินเข้า "โกดัง" (Registry) บน VM2
+        docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY;
+        
+        # 2. เข้าไปที่โฟลเดอร์โปรเจกต์
+        cd ${PROD_APP_PATH};
+        
+        # 3. ดึง "กล่อง" (Image) ใหม่
+        docker-compose -f docker-compose.yml pull; # (หรือ docker-compose.prod.yaml)
+        
+        # 4. สั่งรัน "กล่อง" ใหม่ (ทับของเดิม)
+        docker-compose -f docker-compose.yml up -d;
+      "
+  only:
+    - main # ทำงานนี้เฉพาะเมื่อ Push โค้ดเข้า branch 'main'
+
+    
